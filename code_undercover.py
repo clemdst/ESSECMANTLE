@@ -8,7 +8,7 @@ import random
 # Jeu pour 5 joueurs dont 3 civils, 1 Mr White, 1 Undercover
 
 ### INITIALISATION
-noms_joueurs={'Alexis','Anne','Victor','Jacques','Louis'} # A MODIFIER
+noms_joueurs={'Joueur1','Joueur2','Joueur3','Joueur4','Joueur5'} # A MODIFIER
 rôles={'Mr.White':1,'Undercover':1,'Civil':3} # A MODIFIER
 nb_joueurs=len(noms_joueurs)
 
