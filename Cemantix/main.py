@@ -1,12 +1,11 @@
 import random
 import numpy as np
-from sentence_transformers import SentenceTransformer
+from gensim.models import KeyedVectors
+from distance_mots import cosine_distance, calculate_score
 
-print("Chargement du modèle...")
-model = SentenceTransformer("all-mpnet-base-v2")
-print("Modèle chargé.")
+model = KeyedVectors.load_word2vec_format('word2vec.bin', binary=True)
 
-with open('liste_fr_2.txt', 'r', encoding='utf-8') as file:
+with open('mots_fr.txt', 'r', encoding='utf-8') as file:
     french_words = [line.strip() for line in file]
 
 target_word = random.choice(french_words)
@@ -15,11 +14,7 @@ target_embedding = model.encode([target_word])[0]
 print(f"[DEBUG] Le mot choisi est : {target_word}")
 print("Essayez de deviner un mot au hasard !")
 
-def cosine_distance(a, b):
-    return 1 - np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
-def calculate_score(similarity, k=1):
-    return 100 * (1 - np.exp(-k * similarity))
 
 while True:
     guess = input("Entrez un mot : ").strip()
@@ -33,7 +28,9 @@ while True:
         break
     
     guess_embedding = model.encode([guess])[0]
-    similarity = 1 - cosine_distance(target_embedding, guess_embedding)
     
-    score = calculate_score(similarity)
+    score = calculate_score(
+                            cosine_distance(target_embedding, guess_embedding) 
+                            )
+
     print(f"Score : {score:.2f} ([DEBUG] similarité : {similarity:.4f})")

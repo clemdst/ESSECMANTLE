@@ -1,2 +1,3 @@
-# spoc_ai_essec_2025
-Final project for the AI SPOC at ESSEC BS
+# Recreating the Semantle game 
+
+Final project for the AI SPOC at ESSEC BS, aiming at creating a game similar to semantle (https://semantle.com/)
