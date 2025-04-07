@@ -3,7 +3,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 
 print("Chargement du modèle...")
-model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+model = SentenceTransformer("all-mpnet-base-v2")
 print("Modèle chargé.")
 
 with open('liste_fr_2.txt', 'r', encoding='utf-8') as file:
