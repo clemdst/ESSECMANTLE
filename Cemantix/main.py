@@ -5,7 +5,7 @@ import streamlit as st
 from gensim.models import KeyedVectors
 from distance_mots import cosine_distance, calculate_score
 from huggingface_hub import hf_hub_download
-
+import gdown
 
 # Charger le modèle Word2Vec
 @st.cache_resource
@@ -30,7 +30,7 @@ def jeu_devine_mot(french_words, model):
         st.session_state.target_embedding = model[st.session_state.target_word]
         st.session_state.guesses = []
 
-    st.title("🎯 Jeu : Devinez le mot !")
+    st.title("🎯 ESSECMANTLE")
     st.write("Entrez un mot en français et essayez de deviner le mot secret.")
 
     guess = st.text_input("Entrez votre mot :", key="input_word")
@@ -58,12 +58,12 @@ def jeu_devine_mot(french_words, model):
 # Fonction principale
 def main():
     current_dir = os.path.dirname(__file__) if "__file__" in globals() else os.getcwd()
-    
-    model_path = hf_hub_download(
-    repo_id="Word2vec/fauconnier_frWac_non_lem_no_postag_no_phrase_200_skip_cut100",
-    filename="frWac_non_lem_no_postag_no_phrase_200_skip_cut100.bin",
-    repo_type="model"
-        )   
+    file_id = "1jPqepxSQ4c5cTLnnp-t5bGxJDP7LC8Vn"
+    output_path = "frWac_non_lem_no_postag_no_phrase_200_skip_cut100.bin"
+    url = f"https://drive.google.com/uc?id={file_id}"
+    if not os.path.exists(output_path):
+        gdown.download(url, output_path, quiet=False)
+    model_path = output_path
     mots_path = os.path.join(current_dir, 'mots_fr.txt')
 
     if not os.path.exists(mots_path):
