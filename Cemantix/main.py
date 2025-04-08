@@ -1,85 +1,70 @@
 import os
 import random
 import numpy as np
-import tkinter as tk
-from tkinter import messagebox
+import streamlit as st
 from gensim.models import KeyedVectors
 from distance_mots import cosine_distance, calculate_score
 
 # Charger le modèle Word2Vec
+@st.cache_resource
 def charger_modele(path):
-    print("[INFO] Chargement du modèle Word2Vec...")
+    st.info("Chargement du modèle Word2Vec...")
     model = KeyedVectors.load_word2vec_format(path, binary=True)
-    print("[INFO] Modèle chargé.")
+    st.success("Modèle chargé.")
     return model
 
 # Charger les mots depuis le fichier texte
-def charger_mots(fichier_mots, model):
+@st.cache_data
+def charger_mots(fichier_mots, _model):
     with open(fichier_mots, 'r', encoding='utf-8') as file:
         raw_words = [line.strip() for line in file]
-    french_words = [word for word in raw_words if word in model.key_to_index]
-    print(f"[INFO] {len(french_words)} mots chargés sur {len(raw_words)} présents dans le modèle.")
+    french_words = [word for word in raw_words if word in _model.key_to_index]
     return french_words
 
-# Fonction de jeu dans l'interface graphique
+# Fonction principale du jeu
 def jeu_devine_mot(french_words, model):
-    target_word = random.choice(french_words)
-    target_embedding = model[target_word]
+    if "target_word" not in st.session_state:
+        st.session_state.target_word = random.choice(french_words)
+        st.session_state.target_embedding = model[st.session_state.target_word]
+        st.session_state.guesses = []
 
-    def valider_guess():
-        guess = entry_word.get().strip()
+    st.title("🎯 Jeu : Devinez le mot !")
+    st.write("Entrez un mot en français et essayez de deviner le mot secret.")
 
-        if guess == target_word:
-            messagebox.showinfo("Bravo", "Vous avez trouvé le mot !")
-            root.quit()
-            return
+    guess = st.text_input("Entrez votre mot :", key="input_word")
 
-        if guess not in french_words:
-            messagebox.showwarning("Mot non valide", "Ce mot n'est pas dans notre liste de mots français.")
-            return
+    if st.button("Valider"):
+        if guess == st.session_state.target_word:
+            st.success("🎉 Bravo ! Vous avez trouvé le mot !")
+            st.balloons()
+            # Réinitialiser pour une nouvelle partie
+            del st.session_state.target_word
+        elif guess not in french_words:
+            st.warning("Ce mot n'est pas dans la liste de mots français.")
+        else:
+            guess_embedding = model[guess]
+            similarity = cosine_distance(st.session_state.target_embedding, guess_embedding)
+            score = calculate_score(similarity)
 
-        guess_embedding = model[guess]
-        similarity = cosine_distance(target_embedding, guess_embedding)
-        score = calculate_score(similarity)
+            st.session_state.guesses.append((guess, similarity, score))
 
-        label_score.config(text=f"Score : {score:.2f}")
-        label_similarity.config(text=f"Similarité : {similarity:.4f}")
-
-    # Fenêtre de jeu
-    global root
-    root = tk.Tk()
-    root.title("Jeu de Deviner le Mot")
-
-    label_instructions = tk.Label(root, text="Essayez de deviner le mot !", font=("Helvetica", 14))
-    label_instructions.pack(pady=10)
-
-    label_word = tk.Label(root, text="Entrez un mot : ", font=("Helvetica", 12))
-    label_word.pack()
-
-    entry_word = tk.Entry(root, font=("Helvetica", 12))
-    entry_word.pack(pady=5)
-
-    button_guess = tk.Button(root, text="Valider", font=("Helvetica", 12), command=valider_guess)
-    button_guess.pack(pady=10)
-
-    label_score = tk.Label(root, text="Score : ", font=("Helvetica", 12))
-    label_score.pack()
-
-    label_similarity = tk.Label(root, text="Similarité : ", font=("Helvetica", 12))
-    label_similarity.pack()
-
-    root.mainloop()
+    if st.session_state.get("guesses"):
+        st.subheader("Historique des essais")
+        for g, sim, sc in st.session_state.guesses[::-1]:
+            st.write(f"Mot : **{g}** | Similarité : {sim:.4f} | Score : {sc:.2f}")
 
 # Fonction principale
 def main():
-    current_dir = os.path.dirname(__file__)
+    current_dir = os.path.dirname(__file__) if "__file__" in globals() else os.getcwd()
     model_path = os.path.join(current_dir, 'word2vec.bin')
     mots_path = os.path.join(current_dir, 'mots_fr.txt')
 
     if not os.path.exists(model_path):
-        raise FileNotFoundError(f"Modèle introuvable à l'emplacement : {model_path}")
+        st.error(f"Modèle introuvable à l'emplacement : {model_path}")
+        return
     if not os.path.exists(mots_path):
-        raise FileNotFoundError(f"Fichier de mots introuvable à l'emplacement : {mots_path}")
+        st.error(f"Fichier de mots introuvable à l'emplacement : {mots_path}")
+        return
 
     model = charger_modele(model_path)
     french_words = charger_mots(mots_path, model)
