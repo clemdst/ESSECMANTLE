@@ -4,6 +4,8 @@ import numpy as np
 import streamlit as st
 from gensim.models import KeyedVectors
 from distance_mots import cosine_distance, calculate_score
+from huggingface_hub import hf_hub_download
+
 
 # Charger le modèle Word2Vec
 @st.cache_resource
@@ -56,12 +58,14 @@ def jeu_devine_mot(french_words, model):
 # Fonction principale
 def main():
     current_dir = os.path.dirname(__file__) if "__file__" in globals() else os.getcwd()
-    model_path = os.path.join(current_dir, 'word2vec.bin')
+    
+    model_path = hf_hub_download(
+    repo_id="Word2vec/fauconnier_frWac_non_lem_no_postag_no_phrase_200_skip_cut100",
+    filename="frWac_non_lem_no_postag_no_phrase_200_skip_cut100.bin",
+    repo_type="model"
+        )   
     mots_path = os.path.join(current_dir, 'mots_fr.txt')
 
-    if not os.path.exists(model_path):
-        st.error(f"Modèle introuvable à l'emplacement : {model_path}")
-        return
     if not os.path.exists(mots_path):
         st.error(f"Fichier de mots introuvable à l'emplacement : {mots_path}")
         return
