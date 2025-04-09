@@ -3,3 +3,4 @@ numpy
 streamlit
 huggingface_hub
 gdown
+unidecode

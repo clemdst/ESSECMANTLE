@@ -6,13 +6,14 @@ from gensim.models import KeyedVectors
 from distance_mots import cosine_distance, calculate_score
 from huggingface_hub import hf_hub_download
 import gdown
+from unidecode import unidecode
 
 # Charger le modèle Word2Vec
 @st.cache_resource
 def charger_modele(path):
-    st.info("Chargement du modèle Word2Vec...")
+    st.info("Loading Word2Vec model...")
     model = KeyedVectors.load_word2vec_format(path, binary=True)
-    st.success("Modèle chargé.")
+    st.success("Model loaded.")
     return model
 
 # Charger les mots depuis le fichier texte
@@ -31,18 +32,18 @@ def jeu_devine_mot(french_words, model):
         st.session_state.guesses = []
 
     st.title("🎯 ESSECMANTLE")
-    st.write("Entrez un mot en français et essayez de deviner le mot secret.")
+    st.write("Input a french word and try guessing the secret word")
 
-    guess = st.text_input("Entrez votre mot :", key="input_word")
+    guess = st.text_input("Input a word :", key="input_word").strip().lower()
 
     if st.button("Valider"):
-        if guess == st.session_state.target_word:
-            st.success("🎉 Bravo ! Vous avez trouvé le mot !")
+        if unidecode(guess) == unidecode(st.session_state.target_word):
+            st.success("🎉 Congrats ! You've guessed it !")
             st.balloons()
             # Réinitialiser pour une nouvelle partie
             del st.session_state.target_word
-        elif guess not in french_words:
-            st.warning("Ce mot n'est pas dans la liste de mots français.")
+        elif unidecode(guess) not in [unidecode(word.lower()) for word in french_words]:
+            st.warning("This word is not in the list")
         else:
             guess_embedding = model[guess]
             similarity = cosine_distance(st.session_state.target_embedding, guess_embedding)
@@ -51,9 +52,9 @@ def jeu_devine_mot(french_words, model):
             st.session_state.guesses.append((guess, similarity, score))
 
     if st.session_state.get("guesses"):
-        st.subheader("Historique des essais")
+        st.subheader("Tries")
         for g, sim, sc in st.session_state.guesses[::-1]:
-            st.write(f"Mot : **{g}** | Similarité : {sim:.4f} | Score : {sc:.2f}")
+            st.write(f"Word : **{g}** | Similarity : {sim:.4f} | Score : {sc:.2f}")
 
 # Fonction principale
 def main():
@@ -67,7 +68,7 @@ def main():
     mots_path = os.path.join(current_dir, 'mots_fr.txt')
 
     if not os.path.exists(mots_path):
-        st.error(f"Fichier de mots introuvable à l'emplacement : {mots_path}")
+        st.error(f"No word file at : {mots_path}")
         return
 
     model = charger_modele(model_path)
